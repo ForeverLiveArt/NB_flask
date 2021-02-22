@@ -1,0 +1,4 @@
+Flask==1.1.2
+gunicorn==20.0.4
+rauth==0.7.3
+flask_session==0.3.2
