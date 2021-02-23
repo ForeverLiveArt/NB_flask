@@ -1,10 +1,10 @@
-from flask import Flask, request, flash, jsonify, render_template, redirect, url_for, session
+from flask import Flask, request, flash, render_template, redirect, url_for, session
 from rauth import OAuth2Service
 import os
 import json
 
 app = Flask(__name__)
-app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.secret_key = os.getenv("APP_SECRET")
 
 nation_slug = os.getenv("NATION_SLUG")
 oauth_id = os.getenv("OAUTH_ID")
@@ -29,16 +29,6 @@ nb_session = service.get_session(session_token)
 @app.route('/')
 def index():
     return render_template('index.html')
-
-
-@app.route('/events')
-def events():
-    return render_template('events.html')
-
-
-@app.route('/survey')
-def survey():
-    return render_template('survey.html')
 
 
 @app.route('/people')
@@ -75,7 +65,7 @@ def delete_user():
         response = nb_session.delete(
             f'https://{nation_slug}.nationbuilder.com/api/v1/people/{session["user_id"]}',
         )
-        session.clear()
+        session.pop('user_id')
 
     return redirect(url_for('people'))
 
@@ -136,35 +126,90 @@ def create_user():
     return redirect(url_for('people'))
 
 
+@app.route('/events')
+def events():
+    if session.get('event_id'):
+        response = nb_session.get(
+            f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/events/{session["event_id"]}',
+            params={'format': 'json'},
+            headers={'content-type': 'application/json'}
+        )
+        event_data = json.loads(response.text)
+        if "event" in event_data:
+            answer = event_data["event"]["name"]
+        else:
+            answer = 0
+    else:
+        answer = 0
+
+    return render_template('events.html', answer=answer)
+
+
+@app.route('/edit_event', methods=['POST'])
+def edit_event():
+    if session.get('event_id'):
+
+        event_name = request.form['event_name']
+        event_data = {
+            "status": "unlisted",
+            "start_time": "2013-03-01T18:00:00-00:00",
+            "end_time": "2013-03-01T21:00:00-00:00",
+            "name": event_name
+        }
+
+        response = nb_session.put(
+            f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/events/{session["event_id"]}',
+            params={'format': 'json'},
+            json={'event': event_data},
+            headers={'content-type': 'application/json'}
+        )
+        print(json.loads(response.text))
+    else:
+        answer = 0
+
+    return redirect(url_for('events'))
+
+
+@app.route('/delete_event', methods=['POST'])
+def delete_event():
+    if session.get('event_id'):
+        response = nb_session.delete(
+            f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/events/{session["event_id"]}',
+        )
+        session.pop('event_id')
+
+    return redirect(url_for('events'))
+
+
 @app.route('/create_event', methods=['POST'])
 def create_event():
-    event_date = request.form['event_date']
-    event_name = request.form['last_name']
-    create_event = {
-        "event": {
+    event_start = request.form['event_start']
+    event_end = request.form['event_end']
+    event_name = request.form['event_name']
+    event_details = {
             "status": "unlisted",
-            "name": "Fasting Day",
+            "name": event_name,
             "intro": "Take the 24hr nofoodchallenge!!!",
             "time_zone": "Pacific Time (US & Canada)",
-            "start_time": "2013-05-08T17:00:00-00:00",
-            "end_time": "2013-05-08T19:00:00-00:00",
+            "start_time": event_start,
+            "end_time": event_end,
             "contact": {
                 "name": "Byron Anderson",
                 "contact_phone": "1234567890",
-                "show_phone": true,
+                "show_phone": "true",
                 "contact_email": "contact@venue.com",
                 "email": "contact@venue.com",
-                "show_email": true
+                "show_email": "true"
             },
             "rsvp_form": {
                 "phone": "optional",
                 "address": "required",
-                "allow_guests": true,
-                "accept_rsvps": true,
-                "gather_volunteers": true
+                "allow_guests": "true",
+                "accept_rsvps": "true",
+                "gather_volunteers": "true"
             },
-            "show_guests": true,
-            "capacity": 80,
+            "show_guests": "true",
+            "capacity": "80",
             "venue": {
                 "name": "Ralphs Parking Lot",
                 "address": {
@@ -174,18 +219,23 @@ def create_event():
                 }
             }
         }
-    }
     # this will create a new endpoint "person"
     response = nb_session.post(
-        f'https://{nation_slug}.nationbuilder.com/api/v1/people',
+        f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/events',
         params={'format': 'json'},
-        json={'person': create_person},
+        json={'event': event_details},
         headers={'content-type': 'application/json'}
     )
-    new_user_data = json.loads(response.text)
-    session['user_id'] = new_user_data['person']['id']
-    # print(json_data)
-    return redirect(url_for('people'))
+    new_event_data = json.loads(response.text)
+    print(new_event_data)
+    session['event_id'] = new_event_data['event']['id']
+
+    return redirect(url_for('events'))
+
+
+@app.route('/survey')
+def survey():
+    return render_template('survey.html')
 
 
 if __name__ == '__main__':
