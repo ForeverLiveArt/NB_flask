@@ -66,7 +66,7 @@ def delete_user():
             f'https://{nation_slug}.nationbuilder.com/api/v1/people/{session["user_id"]}',
         )
         session.pop('user_id')
-        session.pop('question_answer')
+        session.clear()
 
     return redirect(url_for('people'))
 
@@ -122,8 +122,10 @@ def create_user():
         headers={'content-type': 'application/json'}
     )
     new_user_data = json.loads(response.text)
+    session.clear()
     session['user_id'] = new_user_data['person']['id']
     # print(json_data)
+
     return redirect(url_for('people'))
 
 
@@ -245,31 +247,42 @@ def survey():
             answer = "no_user_created"  # user not created
 
     response_all = nb_session.get(
-        f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/surveys/',
+        f'https://{nation_slug}.nationbuilder.com/api/v1/survey_responses',
         params={'format': 'json'},
         headers={'content-type': 'application/json'}
     )
-    answersty = json.loads(response_all.text)
-    print(answersty['results'])
-  # for every person_id in answerlist get his mail contact
-    return render_template('survey.html', answer=answer)
+    answer_surveys = json.loads(response_all.text)
+    all_emails = {}
+    for single_answers in answer_surveys['results']:
+        response = nb_session.get(
+            f'https://{nation_slug}.nationbuilder.com/api/v1/people/{single_answers["person_id"]}',
+            params={'format': 'json'},
+            headers={'content-type': 'application/json'}
+        )
+        user_data = json.loads(response.text)
+        user_email = user_data['person']['email']
+        all_emails.update({"email": user_email})
+
+    print(all_emails)
+
+    return render_template('survey.html', answer=answer, all_emails=all_emails)
 
 
 @app.route('/create_survey', methods=['POST'])
 def create_survey():
     survey_details = {
-            "slug": "surveyTester1",
-            "name": "SurveyTester1",
-            "tags": ["funny"],
-            "status":"published",
-            "questions": [{
-              "prompt": "is this a test question?",
-              "external_id": "null",
-              "slug": "test_question",
-              "type": "text",
-              "status": "published"
-            }]
-          }
+        "slug": "surveyTester1",
+        "name": "SurveyTester1",
+        "tags": ["funny"],
+        "status": "published",
+        "questions": [{
+            "prompt": "is this a test question?",
+            "external_id": "null",
+            "slug": "test_question",
+            "type": "text",
+            "status": "published"
+        }]
+    }
     # this will create a new endpoint "person"
     response = nb_session.post(
         f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/surveys',
@@ -297,7 +310,7 @@ def answer_survey():
                     "response": question_answer
                 }]
             }
-            ##this will create a new endpoint "survey answer"
+            # this will create a new endpoint "survey answer"
             response = nb_session.post(
                 f'https://{nation_slug}.nationbuilder.com/api/v1/survey_responses',
                 params={'format': 'json'},
@@ -307,7 +320,7 @@ def answer_survey():
             new_answer_data = json.loads(response.text)
             print(new_answer_data)
             session['question_answer'] = new_answer_data['survey_response']['id']
-    ##print(json_data)
+
     return redirect(url_for('survey'))
 
 

@@ -13,42 +13,45 @@
 
 <header>
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <a class="navbar-brand" href="/">
-        <img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="39" height="auto"
-             class="d-inline-block align-middle">
-        NationBuilder flask
-    </a>
-    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor02"
-            aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
-        <span class="navbar-toggler-icon"></span>
-    </button>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <a class="navbar-brand" href="/">
+            <img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="39" height="auto"
+                 class="d-inline-block align-middle">
+            NationBuilder flask
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarColor02"
+                aria-controls="navbarColor02" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-    <div class="collapse navbar-collapse" id="navbarColor02">
-        <ul class="navbar-nav mr-auto">
-            <li class="nav-item">
-                <a class="nav-link" href="/">Home
-                    <span class="sr-only">(current)</span>
-                </a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/people">People</a>
-            </li>
-            <li class="nav-item">
-                <a class="nav-link" href="/events">Events</a>
-            </li>
-            <li class="nav-item active">
-                <a class="nav-link" href="/survey">Survey</a>
-            </li>
-        </ul>
-    </div>
-</nav>
+        <div class="collapse navbar-collapse" id="navbarColor02">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home
+                        <span class="sr-only">(current)</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/people">People</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/events">Events</a>
+                </li>
+                <li class="nav-item active">
+                    <a class="nav-link" href="/survey">Survey</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
 
 </header>
 
-<div class="col-sm">
-            <div class="card" style="max-width: 25rem;min-width: 18rem;margin-top: 1rem;">
+<div class="container-sm" style="max-width: 69rem;">
+    <h4 class="mt-5">User email for every survey answer will be logged on this page.</h4>
+    <div class="row">
+        <div class="col-sm">
 
+            <div class="card" style="max-width: 25rem;min-width: 18rem;margin-top: 1rem;">
                 <div class="card-header">
                     <h4>Answer Survey</h4>
                 </div>
@@ -77,58 +80,56 @@
                 {% endif %}
                 {% if answer == "no_user_created" %}
                     <div class="container-sm" style="padding-top: 1rem;">
-                        <h6 class="card-title">Please create user</h6>
+                        <h6 class="card-title">Please <a href="/people">create user first</a></h6>
                     </div>
+
                 {% endif %}
                 {% if answer == "question_answered" %}
                     <div class="container-sm" style="padding-top: 1rem;">
-                        <h6 class="card-title">You already answered this question</h6>
+                        <h6 class="card-title">You already answered this question.
+                            <a href="/people">Create new user</a> to answer again</h6>
                     </div>
+
                 {% endif %}
-
-
             </div>
         </div>
 
-
-<!-- <div class="col-sm">
+        <div class="col-sm">
 
             <div class="card" style="max-width: 25rem;margin-top: 1rem;">
                 <div class="card-header">
-                    <h4>User list</h4>
+                    <h4>Latest answers contacts</h4>
                 </div>
                 <div class="container-sm" style="padding: 1rem;">
                     <script
                             src="https://code.jquery.com/jquery-3.5.1.min.js"
                             integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0="
-                            crossorigin="anonymous"></script>
-                    <script src="https://cdnjs.cloudflare.com/ajax/libs/json2html/1.4.0/json2html.min.js"></script>
+                            crossorigin="anonymous">
+
+                    </script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/json2html/1.4.0/json2html.min.js">
+                    </script>
 
                     <script>
-                        let template = {'<>': 'div', 'html': '• ${email} ${last_name}'};
+                        let template = {'<>': 'div', 'html': '• ${email} '};
 
-                        let data = ;
+                        let data = {{ all_emails|tojson|safe }};
                         console.log(data)
                         //native javascript
                         document.write(json2html.transform(data, template));
 
                         //or with jQuery
                         //$("#result").json2html(data,template);
-
                     </script>
+
                 </div>
             </div>
-        </div> -->
 
-<footer class="footer mt-auto py-3 bg-dark">
-    <div class="container">
-        <span class="text-muted">
-            <a href="https://www.biitechsolutions.com/">
-                BIITECH
-            </a>
-        </span>
+        </div>
     </div>
-</footer>
+</div>
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-b5kHyXgcpbZJO/tY9Ul7kGkf1S0CWuKcCD38l8YkeH8z8QjE0GmW1gYU5S9FOnJ0"
