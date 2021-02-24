@@ -90,9 +90,7 @@ def edit_user():
         )
     else:
         answer = 0
-    #
-    # json_data = json.loads(response.text)
-    # print(json_data)
+
     return redirect(url_for('people'))
 
 
@@ -124,7 +122,6 @@ def create_user():
     new_user_data = json.loads(response.text)
     session.clear()
     session['user_id'] = new_user_data['person']['id']
-    # print(json_data)
 
     return redirect(url_for('people'))
 
@@ -159,7 +156,7 @@ def edit_event():
             "end_time": "2013-03-01T21:00:00-00:00",
             "name": event_name
         }
-
+        # edit event with data from frontend
         response = nb_session.put(
             f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/events/{session["event_id"]}',
             params={'format': 'json'},
@@ -222,7 +219,7 @@ def create_event():
             }
         }
     }
-    # this will create a new endpoint "person"
+    # this will create a new endpoint "event"
     response = nb_session.post(
         f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/events',
         params={'format': 'json'},
@@ -251,6 +248,7 @@ def survey():
         params={'format': 'json'},
         headers={'content-type': 'application/json'}
     )
+    # this will list all of the emails from all of the survey answers ever made
     answer_surveys = json.loads(response_all.text)
     all_emails = {}
     for single_answers in answer_surveys['results']:
@@ -283,7 +281,7 @@ def create_survey():
             "status": "published"
         }]
     }
-    # this will create a new endpoint "person"
+    # this will create a new survey
     response = nb_session.post(
         f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/surveys',
         params={'format': 'json'},
