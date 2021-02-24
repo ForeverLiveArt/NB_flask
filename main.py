@@ -66,6 +66,7 @@ def delete_user():
             f'https://{nation_slug}.nationbuilder.com/api/v1/people/{session["user_id"]}',
         )
         session.pop('user_id')
+        session.pop('question_answer')
 
     return redirect(url_for('people'))
 
@@ -187,38 +188,38 @@ def create_event():
     event_end = request.form['event_end']
     event_name = request.form['event_name']
     event_details = {
-            "status": "unlisted",
-            "name": event_name,
-            "intro": "Take the 24hr nofoodchallenge!!!",
-            "time_zone": "Pacific Time (US & Canada)",
-            "start_time": event_start,
-            "end_time": event_end,
-            "contact": {
-                "name": "Byron Anderson",
-                "contact_phone": "1234567890",
-                "show_phone": "true",
-                "contact_email": "contact@venue.com",
-                "email": "contact@venue.com",
-                "show_email": "true"
-            },
-            "rsvp_form": {
-                "phone": "optional",
-                "address": "required",
-                "allow_guests": "true",
-                "accept_rsvps": "true",
-                "gather_volunteers": "true"
-            },
-            "show_guests": "true",
-            "capacity": "80",
-            "venue": {
-                "name": "Ralphs Parking Lot",
-                "address": {
-                    "address1": "123 Foo St",
-                    "city": "Pasadena",
-                    "state": "CA"
-                }
+        "status": "unlisted",
+        "name": event_name,
+        "intro": "Take the 24hr nofoodchallenge!!!",
+        "time_zone": "Pacific Time (US & Canada)",
+        "start_time": event_start,
+        "end_time": event_end,
+        "contact": {
+            "name": "Byron Anderson",
+            "contact_phone": "1234567890",
+            "show_phone": "true",
+            "contact_email": "contact@venue.com",
+            "email": "contact@venue.com",
+            "show_email": "true"
+        },
+        "rsvp_form": {
+            "phone": "optional",
+            "address": "required",
+            "allow_guests": "true",
+            "accept_rsvps": "true",
+            "gather_volunteers": "true"
+        },
+        "show_guests": "true",
+        "capacity": "80",
+        "venue": {
+            "name": "Ralphs Parking Lot",
+            "address": {
+                "address1": "123 Foo St",
+                "city": "Pasadena",
+                "state": "CA"
             }
         }
+    }
     # this will create a new endpoint "person"
     response = nb_session.post(
         f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/events',
@@ -235,7 +236,79 @@ def create_event():
 
 @app.route('/survey')
 def survey():
-    return render_template('survey.html')
+    if session.get('question_answer'):
+        answer = "question_answered"  # question is answered.
+    else:
+        if session.get('user_id'):
+            answer = "no_answer_given"  # user is created, but not answered survey
+        else:
+            answer = "no_user_created"  # user not created
+
+    response_all = nb_session.get(
+        f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/surveys/',
+        params={'format': 'json'},
+        headers={'content-type': 'application/json'}
+    )
+    answersty = json.loads(response_all.text)
+    print(answersty['results'])
+  # for every person_id in answerlist get his mail contact
+    return render_template('survey.html', answer=answer)
+
+
+@app.route('/create_survey', methods=['POST'])
+def create_survey():
+    survey_details = {
+            "slug": "surveyTester1",
+            "name": "SurveyTester1",
+            "tags": ["funny"],
+            "status":"published",
+            "questions": [{
+              "prompt": "is this a test question?",
+              "external_id": "null",
+              "slug": "test_question",
+              "type": "text",
+              "status": "published"
+            }]
+          }
+    # this will create a new endpoint "person"
+    response = nb_session.post(
+        f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/surveys',
+        params={'format': 'json'},
+        json={'survey': survey_details},
+        headers={'content-type': 'application/json'}
+    )
+    new_survey_data = json.loads(response.text)
+    print(new_survey_data)
+    return redirect(url_for('surveys'))
+
+
+@app.route('/answer_survey', methods=['POST'])
+def answer_survey():
+    if session.get('question_answer'):
+        answer = 0
+    else:
+        if session.get('user_id'):
+            question_answer = request.form['question_answer']
+            create_answer = {
+                "survey_id": 3,
+                "person_id": session['user_id'],
+                "question_responses": [{
+                    "question_id": 4,
+                    "response": question_answer
+                }]
+            }
+            ##this will create a new endpoint "survey answer"
+            response = nb_session.post(
+                f'https://{nation_slug}.nationbuilder.com/api/v1/survey_responses',
+                params={'format': 'json'},
+                json={'survey_response': create_answer},
+                headers={'content-type': 'application/json'}
+            )
+            new_answer_data = json.loads(response.text)
+            print(new_answer_data)
+            session['question_answer'] = new_answer_data['survey_response']['id']
+    ##print(json_data)
+    return redirect(url_for('survey'))
 
 
 if __name__ == '__main__':
