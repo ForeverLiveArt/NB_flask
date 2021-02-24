@@ -4,6 +4,6 @@ app.yaml
 /.idea
 __pycache__
 /flask_session
-.gcloudignore
-.flaskenv
-.gitattributes
+*.gcloudignore
+*.flaskenv
+*.gitattributes
