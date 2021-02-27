@@ -33,7 +33,9 @@ def index():
 
 @app.route('/people')
 def people():
-    # this will get all person data with id
+    """Request all user data and return people API page"""
+
+    # this will get all person data with id if user registered in session
     if session.get('user_id'):
         response = nb_session.get(
             f'https://{nation_slug}.nationbuilder.com/api/v1/people/{session["user_id"]}',
@@ -46,9 +48,9 @@ def people():
         else:
             answer = 0
     else:
-        answer = 0
+        answer = 0  # zero means no user registered in session for frontend
 
-    # this will get all people data
+    # this will get every person data from API
     response_all = nb_session.get(
         f'https://{nation_slug}.nationbuilder.com/api/v1/people/',
         params={'format': 'json'},
@@ -61,6 +63,7 @@ def people():
 
 @app.route('/delete_user', methods=['POST'])
 def delete_user():
+    """if user registered in session this function will delete it and redirect to people page"""
     if session.get('user_id'):
         response = nb_session.delete(
             f'https://{nation_slug}.nationbuilder.com/api/v1/people/{session["user_id"]}',
@@ -73,15 +76,16 @@ def delete_user():
 
 @app.route('/edit_user', methods=['POST'])
 def edit_user():
+    """edit user with data from user input"""
     if session.get('user_id'):
-        # get form data
+        # get form data from input form
         first_name = request.form['first_name']
         last_name = request.form['last_name']
         update_person = {
             "first_name": first_name,
             "last_name": last_name
         }
-        # put new data to user
+        # put new data to user database with API
         response = nb_session.put(
             f'https://{nation_slug}.nationbuilder.com/api/v1/people/{session["user_id"]}',
             params={'format': 'json'},
@@ -89,13 +93,15 @@ def edit_user():
             headers={'content-type': 'application/json'}
         )
     else:
-        answer = 0
+        answer = 0  # this answer means no user in session for frontend
 
     return redirect(url_for('people'))
 
 
 @app.route('/create_user', methods=['POST'])
 def create_user():
+    """creates new user and pass user id to session variable"""
+    # get input from web form
     first_name = request.form['first_name']
     last_name = request.form['last_name']
     email = request.form['email']
@@ -120,14 +126,15 @@ def create_user():
         headers={'content-type': 'application/json'}
     )
     new_user_data = json.loads(response.text)
-    session.clear()
-    session['user_id'] = new_user_data['person']['id']
+    session.clear()  # remove previous user data
+    session['user_id'] = new_user_data['person']['id']  # pass user id to session variable
 
     return redirect(url_for('people'))
 
 
 @app.route('/events')
 def events():
+    """return events page"""
     if session.get('event_id'):
         response = nb_session.get(
             f'https://{nation_slug}.nationbuilder.com/api/v1/sites/{nation_slug}/pages/events/{session["event_id"]}',
@@ -140,13 +147,14 @@ def events():
         else:
             answer = 0
     else:
-        answer = 0
+        answer = 0  # means no event created in this session
 
     return render_template('events.html', answer=answer)
 
 
 @app.route('/edit_event', methods=['POST'])
 def edit_event():
+    """will edit event with user input"""
     if session.get('event_id'):
 
         event_name = request.form['event_name']
