@@ -1,0 +1,8 @@
+NationBuilder API exercises made with Flask
+
+This example backend shows basic API functions.
+With flask application you can access NationBuilder sandbox API: 
+- events
+- peope
+- surveys
+
